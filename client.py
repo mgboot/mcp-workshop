@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional
 from contextlib import AsyncExitStack
 import os
+import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -92,7 +93,8 @@ class MCPClient:
             for tool_call in message.tool_calls:
                 tool_name = tool_call.function.name
                 tool_args = tool_call.function.arguments
-                
+                if isinstance(tool_args, str):
+                    tool_args = json.loads(tool_args)
                 # Execute tool call
                 result = await self.session.call_tool(tool_name, tool_args)
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
@@ -106,7 +108,7 @@ class MCPClient:
                         "type": "function",
                         "function": {
                             "name": tool_name,
-                            "arguments": tool_args
+                            "arguments": json.dumps(tool_args)  # <-- ensure this is a string
                         }
                     }]
                 })
